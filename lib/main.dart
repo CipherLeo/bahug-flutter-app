@@ -42,55 +42,31 @@ class _MyHomePageState extends State<MyHomePage> {
     "Crumble Tilapia": 0.31
   };
   double totalIngredientPercent = 0;
-  final List<Map<String, dynamic>> ingredientControllers = [
-    {
-      "name": "Sweet Potato Leaves (Tagbina)",
-      "controller": TextEditingController(),
-      "percent": 0.2103,
-    },
-    {
-      "name": "Sweet Potato Leaves (Del Monte)",
-      "controller": TextEditingController(),
-      "percent": 0.1626,
-    },
-    {
-      "name": "Sweet Potato Flesh Unpeeled",
-      "controller": TextEditingController(),
-      "percent": 0.0329,
-    },
-    {
-      "name": "Soybean (Manchuria Var.)",
-      "controller": TextEditingController(),
-      "percent": 0.3964,
-    },
-    {
-      "name": "Soybean (Tudela Var.)",
-      "controller": TextEditingController(),
-      "percent": 0.3863,
-    },
-  ];
+  Map<int, Map<String, dynamic>> ingredientInputControllers = {};
 
   void updateTotalIngredientPercent() {
     totalIngredientPercent = 0;
-    for(int i=0; i<ingredientControllers.length; i++) {
-      if(ingredientControllers[i]["controller"].text != "") {
-        totalIngredientPercent += double.parse(ingredientControllers[i]["controller"].text)
-          * ingredientControllers[i]["percent"];
+    for(var item in ingredientInputControllers.keys) {
+      if(ingredientInputControllers[item]?["text_editing_controller"].text != null
+        && ingredientInputControllers[item]?["text_editing_controller"].text != ""
+      ) {
+        totalIngredientPercent += ingredientInputControllers[item]?["crude_protein"]
+        * double.parse(ingredientInputControllers[item]?["text_editing_controller"].text);
       }
     }
     totalIngredientPercent = double.parse((totalIngredientPercent * 100).toStringAsFixed(3));
   }
   @override
   void dispose() {
-    ingredientControllers[0]["controller"].dispose();
-    ingredientControllers[1]["controller"].dispose();
-    ingredientControllers[2]["controller"].dispose();
-    ingredientControllers[3]["controller"].dispose();
-    ingredientControllers[4]["controller"].dispose();
+    for(var item in ingredientInputControllers.keys) {
+      if(ingredientInputControllers[item]?["text_editing_controller"] != null) {
+        ingredientInputControllers[item]?["text_editing_controller"].dispose();
+      }
+    }
     super.dispose();
   }
 
-  // Fetching network data.
+  // Fetch network data.
   late Map<String, dynamic> futureBahugData;
   late List<Map<String, dynamic>> allData;
   late List<String> regions;
@@ -109,9 +85,6 @@ class _MyHomePageState extends State<MyHomePage> {
       regions = futureBahugData["regions"].cast<String>();
       livestock = futureBahugData["livestock"].cast<String>();
       feedFormulas = futureBahugData["feed_formulas"].cast<String>();
-
-      Iterable<Map<String, dynamic>> testData = allData.where((element) => element["livestock"] == "Chicken");
-      print(testData);
       return true;
     } else {
       throw Exception('Failed to load data.');
@@ -251,6 +224,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               onChanged: (String? newValue) {
                                 setState(() {
                                   selectedLivestock = newValue!;
+                                  selectedFeedFormula = "";
                                 });
                               },
                               hint: Text(selectedLivestock),
@@ -281,17 +255,23 @@ class _MyHomePageState extends State<MyHomePage> {
                         future: fetchBahugData(),
                         builder: (context, snapshot) {
                           if(snapshot.hasData) {
-                            return Container();
                             return DropdownButton(
-                              items: feedFormulas.map((e) => DropdownMenuItem(
-                                value: e,
-                                child: Text(e),
-                              )).toList(),
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  selectedFeedFormula = newValue!;
-                                });
-                              },
+                              items: allData
+                                .where((Map<String, dynamic> e) => (
+                                    e["livestockname"] == selectedLivestock
+                                    && e["region"] == selectedRegion
+                                  )
+                                )
+                                .map((Map<String, dynamic> e) => e["feedname"]).toSet()
+                                .map((dynamic e) => DropdownMenuItem(
+                                  value: e,
+                                  child: Text(e),
+                                )).toList(),
+                                onChanged: (newValue) {
+                                  setState(() {
+                                    selectedFeedFormula = newValue.toString();
+                                  });
+                                },
                               hint: Text(selectedFeedFormula),
                               elevation: 16,
                               style: const TextStyle(
@@ -311,88 +291,50 @@ class _MyHomePageState extends State<MyHomePage> {
                 ],
               )
             ),
-            ListView(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 60),
-                  child: TextFormField(
-                    controller: ingredientControllers[0]["controller"],
-                    onChanged: (e) {
-                      setState(() {
-                        updateTotalIngredientPercent();
-                      });
-                    },
-                    decoration: InputDecoration(
-                      labelText: ingredientControllers[0]["name"],
-                      hintText: "Weight in kilograms"
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 60),
-                  child: TextFormField(
-                    controller: ingredientControllers[1]["controller"],
-                    onChanged: (e) {
-                      setState(() {
-                        updateTotalIngredientPercent();
-                      });
-                    },
-                    decoration: InputDecoration(
-                      labelText: ingredientControllers[1]["name"],
-                      hintText: "Weight in kilograms"
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 60),
-                  child: TextFormField(
-                    controller: ingredientControllers[2]["controller"],
-                    onChanged: (e) {
-                      setState(() {
-                        updateTotalIngredientPercent();
-                      });
-                    },
-                    decoration: InputDecoration(
-                      labelText: ingredientControllers[2]["name"],
-                      hintText: "Weight in kilograms"
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 60),
-                  child: TextFormField(
-                    controller: ingredientControllers[3]["controller"],
-                    onChanged: (e) {
-                      setState(() {
-                        updateTotalIngredientPercent();
-                      });
-                    },
-                    decoration: InputDecoration(
-                        labelText: ingredientControllers[3]["name"],
-                        hintText: "Weight in kilograms"
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 60),
-                  child: TextFormField(
-                    controller: ingredientControllers[4]["controller"],
-                    onChanged: (e) {
-                      setState(() {
-                        updateTotalIngredientPercent();
-                      });
-                    },
-                    decoration: InputDecoration(
-                        labelText: ingredientControllers[4]["name"],
-                        hintText: "Weight in kilograms"
-                    ),
-                  ),
-                ),
-              ],
-            )
+            FutureBuilder(
+              future: fetchBahugData(),
+              builder: (context, snapshot) {
+                if(snapshot.hasData) {
+                  // Clear the ingredientInputControllers Map.
+                  ingredientInputControllers.clear();
+                  return ListView(
+                    children: allData
+                      .where((element) => (
+                        element["region"] == selectedRegion
+                        && element["livestockname"] == selectedLivestock
+                        && element["feedname"] == selectedFeedFormula
+                        && element["proxname"] == "Crude Protein"
+                      ))
+                      .map((e) {
+                        // Assign TextEditingController and Crude Protein.
+                        int index = allData.indexOf(e);
+                        ingredientInputControllers[index] = {
+                          "crude_protein": e["percentage"],
+                          "text_editing_controller": TextEditingController()
+                        };
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 60),
+                          child: TextFormField(
+                            controller: ingredientInputControllers[index]?["text_editing_controller"],
+                            onChanged: (text) {
+                              setState(() {
+                                updateTotalIngredientPercent();
+                              });
+                            },
+                            decoration: InputDecoration(
+                              labelText: e["ingredientsname"] + " (" + e["munname"] + ")",
+                              hintText: "Weight in kilograms"
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                  );
+                } else if(snapshot.hasError) {
+                  return Text("${snapshot.error} ${snapshot.connectionState}");
+                }
+                return const CircularProgressIndicator();
+              },
+            ),
           ],
         ),
         floatingActionButton: FloatingActionButton(
