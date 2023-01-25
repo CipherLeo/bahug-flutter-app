@@ -21,7 +21,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
@@ -30,7 +29,6 @@ class MyHomePage extends StatefulWidget {
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
-
 class _MyHomePageState extends State<MyHomePage> {
   double requiredCrudeProtein = 0;
   Map<String, double> feedFormula = {
@@ -44,17 +42,18 @@ class _MyHomePageState extends State<MyHomePage> {
   double totalIngredientPercent = 0;
   Map<int, Map<String, dynamic>> ingredientInputControllers = {};
 
+  // Temporary algorithm, as this is costly. Create alternative.
   void updateTotalIngredientPercent() {
     totalIngredientPercent = 0;
     for(var item in ingredientInputControllers.keys) {
-      if(ingredientInputControllers[item]?["text_editing_controller"].text != null
-        && ingredientInputControllers[item]?["text_editing_controller"].text != ""
-      ) {
-        totalIngredientPercent += ingredientInputControllers[item]?["crude_protein"]
-        * double.parse(ingredientInputControllers[item]?["text_editing_controller"].text);
-      }
+      TextEditingController tec = ingredientInputControllers[item]?["text_editing_controller"];
+      double crudeProtein = ingredientInputControllers[item]?["crude_protein"];
+      totalIngredientPercent += crudeProtein * double.parse(tec.text != "" ? tec.text : "0");
+      // if(tec.text != "") {
+      //   totalIngredientPercent += crudeProtein * double.parse(tec.text);
+      // }
     }
-    totalIngredientPercent = double.parse((totalIngredientPercent * 100).toStringAsFixed(3));
+    totalIngredientPercent = double.parse((totalIngredientPercent).toStringAsFixed(3));
   }
   @override
   void dispose() {
@@ -99,249 +98,247 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    fetchBahugData();
-    return DefaultTabController(
-      length: 2,
-      initialIndex: 0,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(widget.title),
-          bottom: const TabBar(
-            tabs: [
-              Tab(
-                icon: Icon(Icons.calculate),
-              ),
-              Tab(
-                icon: Icon(Icons.list),
-              ),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: [
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  const Spacer(flex: 1,),
-                  Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Column(
-                        children: [
-                          const Text(
-                            "Total Crude Protein (%)",
-                            style: TextStyle(
-                              color: Colors.grey,
-                            ),
-                          ),
-                          Text(
-                            "${totalIngredientPercent.toString()} %",
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 72
-                            ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        children: [
-                          const Text(
-                            "Required Crude Protein (%)",
-                            style: TextStyle(
-                              color: Colors.grey,
-                            ),
-                          ),
-                          Text(
-                            "${feedFormula[selectedFeedFormula]! * 100} %",
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 72
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const Spacer(flex: 2,),
-                  Column(
-                    children: [
-                      const Text(
-                        "Region",
-                        style: TextStyle(
-                          color: Colors.grey,
-                        ),
-                      ),
-                      FutureBuilder(
-                        future: fetchBahugData(),
-                        builder: (context, snapshot) {
-                          if(snapshot.hasData) {
-                            return DropdownButton(
-                              items: regions.map((e) => DropdownMenuItem(
-                                value: e,
-                                child: Text(e),
-                              )).toList(),
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  selectedRegion = newValue!;
-                                });
-                              },
-                              hint: Text(selectedRegion),
-                              elevation: 16,
-                              style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+      ),
+      body: Column(
+        children: [
+          // Dashboard
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(30.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Column(
+                          children: [
+                            const Text(
+                              "Total Crude Protein (%)",
+                              style: TextStyle(
+                                color: Colors.grey,
                               ),
-                            );
-                          } else if(snapshot.hasError) {
-                            return Text("${snapshot.error} ${snapshot.connectionState}");
-                          }
-                          return const CircularProgressIndicator();
-                        },
-                      ),
-                    ],
-                  ),
-                  const Spacer(flex: 1,),
-                  Column(
-                    children: [
-                      const Text(
-                        "Livestock",
-                        style: TextStyle(
-                          color: Colors.grey,
-                        ),
-                      ),
-                      FutureBuilder(
-                        future: fetchBahugData(),
-                        builder: (context, snapshot) {
-                          if(snapshot.hasData) {
-                            return DropdownButton(
-                              items: livestock.map((e) => DropdownMenuItem(
-                                value: e,
-                                child: Text(e),
-                              )).toList(),
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  selectedLivestock = newValue!;
-                                  selectedFeedFormula = "";
-                                });
-                              },
-                              hint: Text(selectedLivestock),
-                              elevation: 16,
+                            ),
+                            Text(
+                              "${totalIngredientPercent.toString()} %",
                               style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 72
                               ),
-                            );
-                          } else if(snapshot.hasError) {
-                            return Text("${snapshot.error} ${snapshot.connectionState}");
-                          }
-                          return const CircularProgressIndicator();
-                        },
-                      ),
-                    ],
-                  ),
-                  const Spacer(flex: 1,),
-                  Column(
-                    children: [
-                      const Text(
-                        "Feed Formula",
-                        style: TextStyle(
-                          color: Colors.grey,
+                            ),
+                          ],
                         ),
-                      ),
-                      FutureBuilder(
-                        future: fetchBahugData(),
-                        builder: (context, snapshot) {
-                          if(snapshot.hasData) {
-                            return DropdownButton(
-                              items: allData
-                                .where((Map<String, dynamic> e) => (
+                        Column(
+                          children: [
+                            const Text(
+                              "Required Crude Protein (%)",
+                              style: TextStyle(
+                                color: Colors.grey,
+                              ),
+                            ),
+                            Text(
+                              "${feedFormula[selectedFeedFormula]! * 100} %",
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 72
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20,),
+                    Column(
+                      children: [
+                        const Text(
+                          "Region",
+                          style: TextStyle(
+                            color: Colors.grey,
+                          ),
+                        ),
+                        FutureBuilder(
+                          future: fetchBahugData(),
+                          builder: (context, snapshot) {
+                            if(snapshot.hasData) {
+                              return DropdownButton(
+                                items: regions.map((e) => DropdownMenuItem(
+                                  value: e,
+                                  child: Text(e),
+                                )).toList(),
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    selectedRegion = newValue!;
+                                  });
+                                },
+                                hint: Text(selectedRegion),
+                                elevation: 16,
+                                style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold
+                                ),
+                              );
+                            } else if(snapshot.hasError) {
+                              return Text("${snapshot.error} ${snapshot.connectionState}");
+                            }
+                            return const CircularProgressIndicator();
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20,),
+                    Column(
+                      children: [
+                        const Text(
+                          "Livestock",
+                          style: TextStyle(
+                            color: Colors.grey,
+                          ),
+                        ),
+                        FutureBuilder(
+                          future: fetchBahugData(),
+                          builder: (context, snapshot) {
+                            if(snapshot.hasData) {
+                              return DropdownButton(
+                                items: livestock.map((e) => DropdownMenuItem(
+                                  value: e,
+                                  child: Text(e),
+                                )).toList(),
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    selectedLivestock = newValue!;
+                                    selectedFeedFormula = "";
+                                  });
+                                },
+                                hint: Text(selectedLivestock),
+                                elevation: 16,
+                                style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold
+                                ),
+                              );
+                            } else if(snapshot.hasError) {
+                              return Text("${snapshot.error} ${snapshot.connectionState}");
+                            }
+                            return const CircularProgressIndicator();
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20,),
+                    Column(
+                      children: [
+                        const Text(
+                          "Feed Formula",
+                          style: TextStyle(
+                            color: Colors.grey,
+                          ),
+                        ),
+                        FutureBuilder(
+                          future: fetchBahugData(),
+                          builder: (context, snapshot) {
+                            if(snapshot.hasData) {
+                              return DropdownButton(
+                                items: allData
+                                    .where((Map<String, dynamic> e) => (
                                     e["livestockname"] == selectedLivestock
-                                    && e["region"] == selectedRegion
-                                  )
+                                        && e["region"] == selectedRegion
                                 )
-                                .map((Map<String, dynamic> e) => e["feedname"]).toSet()
-                                .map((dynamic e) => DropdownMenuItem(
+                                )
+                                    .map((Map<String, dynamic> e) => e["feedname"]).toSet()
+                                    .map((dynamic e) => DropdownMenuItem(
                                   value: e,
                                   child: Text(e),
                                 )).toList(),
                                 onChanged: (newValue) {
                                   setState(() {
-                                    selectedFeedFormula = newValue.toString();
+                                    selectedFeedFormula = newValue.toString()!;
+                                    ingredientInputControllers.clear();
                                   });
                                 },
-                              hint: Text(selectedFeedFormula),
-                              elevation: 16,
-                              style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold
-                              ),
-                            );
-                          } else if(snapshot.hasError) {
-                            return Text("${snapshot.error} ${snapshot.connectionState}");
-                          }
-                          return const CircularProgressIndicator();
-                        },
-                      ),
-                    ],
-                  ),
-                  const Spacer(flex: 2,),
-                ],
-              )
+                                hint: Text(selectedFeedFormula),
+                                elevation: 16,
+                                style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold
+                                ),
+                              );
+                            } else if(snapshot.hasError) {
+                              return Text("${snapshot.error} ${snapshot.connectionState}");
+                            }
+                            return const CircularProgressIndicator();
+                          },
+                        ),
+                      ],
+                    ),
+
+                  ],
+                ),
+              ),
             ),
-            FutureBuilder(
-              future: fetchBahugData(),
-              builder: (context, snapshot) {
-                if(snapshot.hasData) {
-                  // Clear the ingredientInputControllers Map.
-                  ingredientInputControllers.clear();
-                  return ListView(
+          ),
+          // Ingredients List
+          FutureBuilder(
+            future: fetchBahugData(),
+            builder: (context, snapshot) {
+              if(snapshot.hasData) {
+                return SingleChildScrollView(
+                  child: Column(
                     children: allData
                       .where((element) => (
                         element["region"] == selectedRegion
-                        && element["livestockname"] == selectedLivestock
-                        && element["feedname"] == selectedFeedFormula
-                        && element["proxname"] == "Crude Protein"
+                          && element["livestockname"] == selectedLivestock
+                          && element["feedname"] == selectedFeedFormula
+                          && element["proxname"] == "Crude Protein"
                       ))
                       .map((e) {
                         // Assign TextEditingController and Crude Protein.
                         int index = allData.indexOf(e);
+                        TextEditingController tec = TextEditingController();
                         ingredientInputControllers[index] = {
                           "crude_protein": e["percentage"],
-                          "text_editing_controller": TextEditingController()
+                          "text_editing_controller": tec
                         };
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 60),
                           child: TextFormField(
-                            controller: ingredientInputControllers[index]?["text_editing_controller"],
-                            onChanged: (text) {
-                              setState(() {
-                                updateTotalIngredientPercent();
-                              });
+                            controller: tec,
+                            onChanged: (e) {
+                              // setState(() {});
+                              updateTotalIngredientPercent();
                             },
                             decoration: InputDecoration(
-                              labelText: e["ingredientsname"] + " (" + e["munname"] + ")",
-                              hintText: "Weight in kilograms"
+                              labelText: e["ingredientsname"] + " — "
+                                + e["munname"] + " ("
+                                + e["percentage"].toString() + ")",
+                              // labelText: ingredientInputControllers[index]?["text_editing_controller"].toString(),
+                              hintText: "Weight in kg"
                             ),
                           ),
                         );
                       }).toList(),
-                  );
-                } else if(snapshot.hasError) {
-                  return Text("${snapshot.error} ${snapshot.connectionState}");
-                }
-                return const CircularProgressIndicator();
-              },
-            ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {},
-          tooltip: 'Ingredients',
-          child: const Icon(Icons.info_outline_rounded),
-        ),
+                  ),
+                );
+              } else if(snapshot.hasError) {
+                return Text("${snapshot.error} ${snapshot.connectionState}");
+              }
+              return const CircularProgressIndicator();
+            },
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {});
+        },
+        tooltip: 'Ingredients',
+        child: const Icon(Icons.info_outline_rounded),
       ),
     );
   }
