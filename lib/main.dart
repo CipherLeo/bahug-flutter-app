@@ -75,12 +75,20 @@ class _MyHomePageState extends State<MyHomePage> {
   late List<String> feedFormulas;
   String selectedFeedFormula = "";
 
+  TextEditingController tecPercent = TextEditingController();
+  String selectedIngredientId = "";
+
   Future<bool> fetchBahugData() async {
     final response = await http
       .get(Uri.parse("http://localhost:3000/api/all_data"));
     if(response.statusCode == 200) {
       futureBahugData = jsonDecode(response.body);
       allData = futureBahugData["all_data"].cast<Map<String, dynamic>>();
+      allData = allData.map((e) {
+        e["id"] = allData.indexOf(e);
+        return e;
+      }).toList();
+      print(allData);
       regions = futureBahugData["regions"].cast<String>();
       livestock = futureBahugData["livestock"].cast<String>();
       feedFormulas = futureBahugData["feed_formulas"].cast<String>();
@@ -289,40 +297,93 @@ class _MyHomePageState extends State<MyHomePage> {
             builder: (context, snapshot) {
               if(snapshot.hasData) {
                 return SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
                   child: Column(
-                    children: allData
-                      .where((element) => (
-                        element["region"] == selectedRegion
-                          && element["livestockname"] == selectedLivestock
-                          && element["feedname"] == selectedFeedFormula
-                          && element["proxname"] == "Crude Protein"
-                      ))
-                      .map((e) {
-                        // Assign TextEditingController and Crude Protein.
-                        int index = allData.indexOf(e);
-                        TextEditingController tec = TextEditingController();
-                        ingredientInputControllers[index] = {
-                          "crude_protein": e["percentage"],
-                          "text_editing_controller": tec
-                        };
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 60),
-                          child: TextFormField(
-                            controller: tec,
-                            onChanged: (e) {
-                              // setState(() {});
-                              updateTotalIngredientPercent();
-                            },
-                            decoration: InputDecoration(
-                              labelText: e["ingredientsname"] + " — "
-                                + e["munname"] + " ("
-                                + e["percentage"].toString() + ")",
-                              // labelText: ingredientInputControllers[index]?["text_editing_controller"].toString(),
-                              hintText: "Weight in kg"
-                            ),
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Row(
+                            children: [
+                              DropdownButton(
+                                items: allData
+                                  .where((element) =>
+                                    element["region"] == selectedRegion
+                                    && element["livestockname"] == selectedLivestock
+                                    && element["feedname"] == selectedFeedFormula
+                                    && element["proxname"] == "Crude Protein"
+                                  )
+                                  .map((e) => {
+                                    "id": e["id"],
+                                    "name": e["ingredientsname"],
+                                    "percentage": e["percent"]
+                                  }).toList()
+                                  .map((e) => DropdownMenuItem(
+                                    value: e["id"],
+                                    child: Text(e["name"]),
+                                  )).toList(),
+                                onChanged: (newValue) {
+                                  setState(() {
+                                    selectedIngredientId = newValue["id"]?.toString();
+                                  });
+                                },
+                                hint: Text(selected),
+                                elevation: 16,
+                                style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold
+                                ),
+                              ),
+                              const SizedBox(width: 10,),
+                              DropdownButton(
+                                items: regions.map((e) => DropdownMenuItem(
+                                  value: e,
+                                  child: Text(e),
+                                )).toList(),
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    selectedRegion = newValue!;
+                                  });
+                                },
+                                hint: Text(selectedRegion),
+                                elevation: 16,
+                                style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold
+                                ),
+                              ),
+                            ],
+                          )
+                        ],
+                      ),
+                      const SizedBox(height: 10,),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Row(
+                            children: [
+                              ElevatedButton(
+                                onPressed: () {},
+                                child: const Padding(
+                                  padding: EdgeInsets.all(10.0),
+                                  child: Text("Add Ingredient"),
+                                ),
+                              ),
+                              const SizedBox(width: 10,),
+                              ElevatedButton(
+                                onPressed: () {},
+                                child: const Padding(
+                                  padding: EdgeInsets.all(10.0),
+                                  child: Text("Reset"),
+                                ),
+                              ),
+                            ],
                           ),
-                        );
-                      }).toList(),
+                        ],
+                      ),
+                      const SizedBox(height: 10,),
+                      const Divider(),
+                    ],
                   ),
                 );
               } else if(snapshot.hasError) {
