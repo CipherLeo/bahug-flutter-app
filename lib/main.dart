@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'cubits/total_percent_proximate_analysis_cubit.dart';
-import 'cubits/required_percent_proximate_analyses_cubit.dart';
 
 
 void main() {
@@ -45,16 +44,6 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 class _MyHomePageState extends State<MyHomePage> {
-  double requiredCrudeProtein = 0;
-  Map<String, double> feedFormula = {
-    "": 0.0,
-    "Broiler Starter Mash": 0.19,
-    "Duck Starter Mash": 0.19,
-    "Fry Mash Milk Fish": 0.31,
-    "Crumble Milk Fish": 0.20,
-    "Crumble Tilapia": 0.31
-  };
-  double totalIngredientPercent = 0;
   Map<int, Map<String, dynamic>> ingredientInputControllers = {};
 
   @override
@@ -132,28 +121,28 @@ class _MyHomePageState extends State<MyHomePage> {
                               ),
                             ),
                             BlocBuilder<TotalPercentProximateAnalysisCubit, double>(
-                              builder: (context, state) {
-                                double totalPercent = state;
-                                double requiredPercent = context.read<RequiredPercentProximateAnalysesCubit>().state;
-                                Color totalPercentColor = Colors.black;
-                                double allowedPercentage = 0.05;
+                                builder: (context, state) {
+                                  double totalPercent = state;
+                                  double requiredPercent = context.read<RequiredPercentProximateAnalysesCubit>().state;
+                                  Color totalPercentColor = Colors.black;
+                                  double allowedPercentage = 0.05;
 
-                                if(totalPercent < requiredPercent - (requiredPercent * allowedPercentage)) {
-                                  totalPercentColor = Colors.red;
-                                } else if (totalPercent > requiredPercent + (requiredPercent * allowedPercentage)) {
-                                  totalPercentColor = Colors.purple;
-                                } else {
-                                  totalPercentColor = Colors.green;
+                                  if(totalPercent < requiredPercent - (requiredPercent * allowedPercentage)) {
+                                    totalPercentColor = Colors.red;
+                                  } else if (totalPercent > requiredPercent + (requiredPercent * allowedPercentage)) {
+                                    totalPercentColor = Colors.purple;
+                                  } else {
+                                    totalPercentColor = Colors.green;
+                                  }
+                                  return Text(
+                                    "${state.toString()} %",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 72,
+                                      color: totalPercentColor,
+                                    ),
+                                  );
                                 }
-                                return Text(
-                                  "${state.toString()} %",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 72,
-                                    color: totalPercentColor,
-                                  ),
-                                );
-                              }
                             ),
                           ],
                         ),
@@ -170,8 +159,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                 return Text(
                                   "$state %",
                                   style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 72
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 72
                                   ),
                                 );
                               },
@@ -290,7 +279,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 )).toList(),
                                 onChanged: (newValue) {
                                   setState(() {
-                                    selectedFeedFormula = newValue.toString()!;
+                                    selectedFeedFormula = newValue.toString();
                                   });
                                   ingredientInputControllers.clear();
                                   context.read<TotalPercentProximateAnalysisCubit>()
@@ -326,41 +315,44 @@ class _MyHomePageState extends State<MyHomePage> {
             future: fetchBahugData(),
             builder: (context, snapshot) {
               if(snapshot.hasData) {
-                return SingleChildScrollView(
-                  child: Column(
-                    children: allData
-                      .where((element) => (
-                        element["region"] == selectedRegion
-                          && element["livestockname"] == selectedLivestock
-                          && element["feedname"] == selectedFeedFormula
-                          && element["proxname"] == "Crude Protein"
-                      ))
-                      .map((e) {
-                        // Assign TextEditingController and Crude Protein.
-                        int index = allData.indexOf(e);
-                        TextEditingController tec = TextEditingController();
-                        ingredientInputControllers[index] = {
-                          "crude_protein": e["percentage"],
-                          "text_editing_controller": tec
-                        };
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 60),
-                          child: TextFormField(
-                            controller: tec,
-                            onChanged: (e) {
-                              context.read<TotalPercentProximateAnalysisCubit>()
-                                .update(ingredientInputControllers);
-                            },
-                            decoration: InputDecoration(
-                              labelText: e["ingredientsname"] + " — "
-                                + e["munname"] + " ("
-                                + e["percentage"].toString() + ")",
-                              // labelText: ingredientInputControllers[index]?["text_editing_controller"].toString(),
-                              hintText: "Weight in kg"
+                return Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    child: Column(
+                      children: allData
+                        .where((element) => (
+                          element["region"] == selectedRegion
+                            && element["livestockname"] == selectedLivestock
+                            && element["feedname"] == selectedFeedFormula
+                            && element["proxname"] == "Crude Protein"
+                        ))
+                        .map((e) {
+                          // Assign TextEditingController and Crude Protein.
+                          int index = allData.indexOf(e);
+                          TextEditingController tec = TextEditingController();
+                          ingredientInputControllers[index] = {
+                            "crude_protein": e["percentage"],
+                            "text_editing_controller": tec
+                          };
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 60),
+                            child: TextFormField(
+                              controller: tec,
+                              onChanged: (e) {
+                                context.read<TotalPercentProximateAnalysisCubit>()
+                                  .update(ingredientInputControllers);
+                              },
+                              decoration: InputDecoration(
+                                labelText: e["ingredientsname"] + " — "
+                                  + e["munname"] + " ("
+                                  + e["percentage"].toString() + ")",
+                                // labelText: ingredientInputControllers[index]?["text_editing_controller"].toString(),
+                                hintText: "Weight in kg"
+                              ),
                             ),
-                          ),
-                        );
-                      }).toList(),
+                          );
+                        }).toList(),
+                    ),
                   ),
                 );
               } else if(snapshot.hasError) {

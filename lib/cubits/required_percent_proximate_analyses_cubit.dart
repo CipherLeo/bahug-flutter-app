@@ -10,10 +10,6 @@ class RequiredPercentProximateAnalysesCubit extends Cubit<double> {
   }
 
   void update(List<Map<String, dynamic>> requirements, String feedFormulaName) {
-    print({
-      'requirements': requirements,
-      'feed_formula_name': feedFormulaName,
-    });
     List<Map<String, dynamic>> foundRequirement = requirements
       .where((element) => (
         element['feed_formula_name'] == feedFormulaName
