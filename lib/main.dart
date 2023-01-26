@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'cubits/total_percent_proximate_analysis_cubit.dart';
 
 
 void main() {
@@ -12,12 +14,19 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Bahug Application',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(title: 'Bahug App'),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<TotalPercentProximateAnalysisCubit>(
+          create: (_) => TotalPercentProximateAnalysisCubit(0),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'Bahug Application',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        home: const MyHomePage(title: 'Bahug App'),
+      )
     );
   }
 }
@@ -42,19 +51,6 @@ class _MyHomePageState extends State<MyHomePage> {
   double totalIngredientPercent = 0;
   Map<int, Map<String, dynamic>> ingredientInputControllers = {};
 
-  // Temporary algorithm, as this is costly. Create alternative.
-  void updateTotalIngredientPercent() {
-    totalIngredientPercent = 0;
-    for(var item in ingredientInputControllers.keys) {
-      TextEditingController tec = ingredientInputControllers[item]?["text_editing_controller"];
-      double crudeProtein = ingredientInputControllers[item]?["crude_protein"];
-      totalIngredientPercent += crudeProtein * double.parse(tec.text != "" ? tec.text : "0");
-      // if(tec.text != "") {
-      //   totalIngredientPercent += crudeProtein * double.parse(tec.text);
-      // }
-    }
-    totalIngredientPercent = double.parse((totalIngredientPercent).toStringAsFixed(3));
-  }
   @override
   void dispose() {
     for(var item in ingredientInputControllers.keys) {
@@ -126,12 +122,16 @@ class _MyHomePageState extends State<MyHomePage> {
                                 color: Colors.grey,
                               ),
                             ),
-                            Text(
-                              "${totalIngredientPercent.toString()} %",
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 72
-                              ),
+                            BlocBuilder<TotalPercentProximateAnalysisCubit, double>(
+                              builder: (context, state) {
+                                return Text(
+                                  "${state.toString()} %",
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 72
+                                  ),
+                                );
+                              }
                             ),
                           ],
                         ),
@@ -310,8 +310,8 @@ class _MyHomePageState extends State<MyHomePage> {
                           child: TextFormField(
                             controller: tec,
                             onChanged: (e) {
-                              // setState(() {});
-                              updateTotalIngredientPercent();
+                              context.read<TotalPercentProximateAnalysisCubit>()
+                                .update(ingredientInputControllers);
                             },
                             decoration: InputDecoration(
                               labelText: e["ingredientsname"] + " — "
