@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'package:bahug_app/cubits/required_percent_proximate_analyses_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'cubits/total_percent_proximate_analysis_cubit.dart';
+import 'cubits/required_percent_proximate_analyses_cubit.dart';
 
 
 void main() {
@@ -19,6 +22,9 @@ class MyApp extends StatelessWidget {
         BlocProvider<TotalPercentProximateAnalysisCubit>(
           create: (_) => TotalPercentProximateAnalysisCubit(0),
         ),
+        BlocProvider<RequiredPercentProximateAnalysesCubit>(
+          create: (_) => RequiredPercentProximateAnalysesCubit(0),
+        )
       ],
       child: MaterialApp(
         title: 'Bahug Application',
@@ -70,6 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String selectedLivestock = "";
   late List<String> feedFormulas;
   String selectedFeedFormula = "";
+  late List<Map<String, dynamic>> requirements;
 
   Future<bool> fetchBahugData() async {
     final response = await http
@@ -80,6 +87,8 @@ class _MyHomePageState extends State<MyHomePage> {
       regions = futureBahugData["regions"].cast<String>();
       livestock = futureBahugData["livestock"].cast<String>();
       feedFormulas = futureBahugData["feed_formulas"].cast<String>();
+      requirements = futureBahugData["proximate_analysis_requirements"]
+        .cast<Map<String, dynamic>>();
       return true;
     } else {
       throw Exception('Failed to load data.');
@@ -124,11 +133,24 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                             BlocBuilder<TotalPercentProximateAnalysisCubit, double>(
                               builder: (context, state) {
+                                double totalPercent = state;
+                                double requiredPercent = context.read<RequiredPercentProximateAnalysesCubit>().state;
+                                Color totalPercentColor = Colors.black;
+                                double allowedPercentage = 0.05;
+
+                                if(totalPercent < requiredPercent - (requiredPercent * allowedPercentage)) {
+                                  totalPercentColor = Colors.red;
+                                } else if (totalPercent > requiredPercent + (requiredPercent * allowedPercentage)) {
+                                  totalPercentColor = Colors.purple;
+                                } else {
+                                  totalPercentColor = Colors.green;
+                                }
                                 return Text(
                                   "${state.toString()} %",
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 72
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 72,
+                                    color: totalPercentColor,
                                   ),
                                 );
                               }
@@ -143,12 +165,16 @@ class _MyHomePageState extends State<MyHomePage> {
                                 color: Colors.grey,
                               ),
                             ),
-                            Text(
-                              "${feedFormula[selectedFeedFormula]! * 100} %",
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 72
-                              ),
+                            BlocBuilder<RequiredPercentProximateAnalysesCubit, double>(
+                              builder: (context, state) {
+                                return Text(
+                                  "$state %",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 72
+                                  ),
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -253,7 +279,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               return DropdownButton(
                                 items: allData
                                   .where((Map<String, dynamic> e) => (
-                                  e["livestockname"] == selectedLivestock
+                                    e["livestockname"] == selectedLivestock
                                     && e["region"] == selectedRegion
                                   )
                                 )
@@ -269,6 +295,10 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ingredientInputControllers.clear();
                                   context.read<TotalPercentProximateAnalysisCubit>()
                                     .update(ingredientInputControllers);
+
+                                  // Update Required Proximate Analysis (Crude Protein) Requirement.
+                                  context.read<RequiredPercentProximateAnalysesCubit>()
+                                    .update(requirements, newValue.toString());
                                 },
                                 hint: Text(selectedFeedFormula),
                                 elevation: 16,
