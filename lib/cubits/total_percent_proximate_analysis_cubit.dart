@@ -18,7 +18,7 @@ class TotalPercentProximateAnalysisCubit extends Cubit<double> {
     for(var item in tecs.keys) {
       TextEditingController tec = tecs[item]?["text_editing_controller"];
       double crudeProtein = tecs[item]?["crude_protein"];
-      totalIngredientPercent += crudeProtein * double.parse(tec.text != "" ? tec.text : "0");
+      totalIngredientPercent += (crudeProtein / 100) * double.parse(tec.text != "" ? tec.text : "0");
     }
     totalIngredientPercent = double.parse((totalIngredientPercent).toStringAsFixed(3));
 
