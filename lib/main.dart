@@ -176,6 +176,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                   setState(() {
                                     selectedRegion = newValue!;
                                   });
+                                  ingredientInputControllers.clear();
+                                  context.read<TotalPercentProximateAnalysisCubit>()
+                                    .update(ingredientInputControllers);
                                 },
                                 hint: Text(selectedRegion),
                                 elevation: 16,
@@ -215,6 +218,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                     selectedLivestock = newValue!;
                                     selectedFeedFormula = "";
                                   });
+                                  ingredientInputControllers.clear();
+                                  context.read<TotalPercentProximateAnalysisCubit>()
+                                    .update(ingredientInputControllers);
                                 },
                                 hint: Text(selectedLivestock),
                                 elevation: 16,
@@ -246,21 +252,23 @@ class _MyHomePageState extends State<MyHomePage> {
                             if(snapshot.hasData) {
                               return DropdownButton(
                                 items: allData
-                                    .where((Map<String, dynamic> e) => (
-                                    e["livestockname"] == selectedLivestock
-                                        && e["region"] == selectedRegion
+                                  .where((Map<String, dynamic> e) => (
+                                  e["livestockname"] == selectedLivestock
+                                    && e["region"] == selectedRegion
+                                  )
                                 )
-                                )
-                                    .map((Map<String, dynamic> e) => e["feedname"]).toSet()
-                                    .map((dynamic e) => DropdownMenuItem(
+                                .map((Map<String, dynamic> e) => e["feedname"]).toSet()
+                                .map((dynamic e) => DropdownMenuItem(
                                   value: e,
                                   child: Text(e),
                                 )).toList(),
                                 onChanged: (newValue) {
                                   setState(() {
                                     selectedFeedFormula = newValue.toString()!;
-                                    ingredientInputControllers.clear();
                                   });
+                                  ingredientInputControllers.clear();
+                                  context.read<TotalPercentProximateAnalysisCubit>()
+                                    .update(ingredientInputControllers);
                                 },
                                 hint: Text(selectedFeedFormula),
                                 elevation: 16,
