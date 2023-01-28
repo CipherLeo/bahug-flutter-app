@@ -74,8 +74,20 @@ class _MyHomePageState extends State<MyHomePage> {
       futureBahugData = jsonDecode(response.body);
       allData = futureBahugData["all_data"].cast<Map<String, dynamic>>();
       regions = futureBahugData["regions"].cast<String>();
-      livestock = futureBahugData["livestock"].cast<String>();
-      feedFormulas = futureBahugData["feed_formulas"].cast<String>();
+
+      livestock = [];
+      for (var e in futureBahugData["livestock"]) {
+        if(e != null) {
+          livestock.add(e);
+        }
+      }
+      feedFormulas = [];
+      for (var e in futureBahugData["feed_formulas"]) {
+        if(e != null) {
+          feedFormulas.add(e);
+        }
+      }
+
       requirements = futureBahugData["proximate_analysis_requirements"]
         .cast<Map<String, dynamic>>();
       return true;
