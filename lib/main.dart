@@ -236,13 +236,16 @@ class _MyHomePageState extends State<MyHomePage> {
                           builder: (context, snapshot) {
                             if(snapshot.hasData) {
                               return DropdownButton(
-                                items: livestock.map((e) => DropdownMenuItem(
-                                  value: e,
-                                  child: Text(e),
-                                )).toList(),
-                                onChanged: (String? newValue) {
+                                items: allData
+                                  .where((element) => element['region'] == selectedRegion)
+                                  .map((e) => e['livestockname']).toSet()
+                                  .map((e) => DropdownMenuItem(
+                                    value: e,
+                                    child: Text(e),
+                                  )).toList(),
+                                onChanged: (newValue) {
                                   setState(() {
-                                    selectedLivestock = newValue!;
+                                    selectedLivestock = newValue.toString();
                                     selectedFeedFormula = "";
                                   });
                                   ingredientInputControllers.clear();
@@ -252,8 +255,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                 hint: Text(selectedLivestock),
                                 elevation: 16,
                                 style: const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold
                                 ),
                               );
                             } else if(snapshot.hasError) {
